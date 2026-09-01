@@ -19,9 +19,10 @@ names. The projects are the source of truth for their own packaging.
 | fslog | [freeswitch-log-parser](https://github.com/ticpu/freeswitch-log-parser) | all four | not yet |
 | ticpu-archive-keyring | here, `make keyring` | all four | n/a |
 
-Not in the archive yet, and why: **fs_cli-rs** publishes only bare binaries, its
-CI never runs `make deb`, and its control file declares no `Depends` at all —
-apt would offer it to a host whose glibc cannot run it. **ccusage-statusline-rs**
+Not in the archive yet, and why: **fs_cli-rs** is registered in `projects.yaml`
+but waiting on its first release to carry a `.deb` — v1.4.4 onwards, which
+also has the derived `Depends` and draft-then-sign it previously lacked.
+**ccusage-statusline-rs**
 and **claude-conversation-search-mcp** build no `.deb` in-repo; ccusage's debs
 are made out-of-tree by the AUR clone's `deploy-aptly.sh` with makedeb, aimed at
 a different archive.

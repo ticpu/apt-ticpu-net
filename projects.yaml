@@ -19,3 +19,12 @@
   assets:
   - glob: fslog_*.deb
     suites: [bookworm, trixie, noble, resolute]
+
+# Registered ahead of its first signed release, which is v1.4.4 onwards; earlier
+# tags carry no .deb at all and would fail the signed check anyway.
+- name: fs_cli-rs
+  repo: ticpu/fs_cli-rs
+  signed: true
+  assets:
+  - glob: fs-cli_*.deb
+    suites: [bookworm, trixie, noble, resolute]
