@@ -51,3 +51,11 @@
   assets:
   - glob: claude-conversation-search_*.deb
     suites: [bookworm, trixie, noble, resolute, generic]
+
+- name: ccusage-statusline-rs
+  repo: ticpu/ccusage-statusline-rs
+  signed: true
+  version_from_tag: true
+  assets:
+  - glob: ccusage-statusline-rs_*.deb
+    suites: [bookworm, trixie, noble, resolute, generic]

@@ -35,13 +35,40 @@ names. The projects are the source of truth for their own packaging.
 | fs-cli | [fs_cli-rs](https://github.com/ticpu/fs_cli-rs) | all five | yes |
 | ticpu-claude-command-hook | [ticpu-claude-command-hook](https://github.com/ticpu/ticpu-claude-command-hook) | all five | yes |
 | claude-conversation-search | [claude-conversation-search-mcp](https://github.com/ticpu/claude-conversation-search-mcp) | all five | yes |
+| ccusage-statusline-rs | [ccusage-statusline-rs](https://github.com/ticpu/ccusage-statusline-rs) | all five | yes |
 | ticpu-archive-keyring | here, `make keyring` | all five | n/a |
 
 Everything ingested is signature-verified. Nothing here is `signed: false`, and
 adding a project that way should be a deliberate, temporary decision.
 
-Not in the archive yet: **ccusage-statusline-rs** has packaging on master and is
-waiting only on a release being cut.
+ccusage-statusline-rs is the one package with no `Depends` at all, and that is
+correct: it links static-pie against musl, so there is no interpreter and no
+`DT_NEEDED`. Its packaging fails the build if dynamic linking ever reappears,
+which is what makes `generic` safe for it rather than merely convenient.
+
+### What a project has to do to be carried
+
+Every feeding repo now follows the same shape, and the archive enforces each
+part rather than trusting it:
+
+1. **CI builds the `.deb`s and creates the release as a draft.** Draft is not
+   optional — releases are immutable once published, so signatures have to land
+   before that.
+2. **`sign-release.sh` runs locally**, detach-signs every asset with the key from
+   `git config user.signingkey`, uploads the `.asc` files, and clears the draft
+   flag last. The key never reaches CI.
+3. **Someone tells this repo the tag**, and `./ingest.sh <project> <tag>` does
+   the rest.
+
+What ingest refuses: an asset signed by any other key, a missing signature, a
+`.deb` matching no suite, and a version that disagrees with the tag. All four
+are conditions that would otherwise be discovered by a user rather than here.
+
+The per-repo packaging conventions that made this work — deriving the glibc
+floor and the whole `Depends` set from the built binary rather than typing
+them, and failing the build on an unmappable `DT_NEEDED` — live in those repos,
+not here. Three separate projects found a hand-typed floor was wrong the first
+time they derived it.
 
 ### The podman set is not uniform
 
