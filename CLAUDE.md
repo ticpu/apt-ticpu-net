@@ -53,6 +53,13 @@ appears; `config.sh`'s `signing_key()` reads it back. The same key signs the
 release assets ingest verifies, so a hand-downloaded `.deb` and the archive it
 also lives in answer to one identity.
 
+Ingest checks the *fingerprint*, not just that a signature is good. Plain
+`gpg --verify` accepts anything in the local keyring, so a release signed with
+the maintainer's work-scoped key would sail through while carrying nothing this
+archive vouches for — which is not hypothetical: fs_cli-rs resolved to that key
+until it was pinned. `verify_sig()` matches gpg's `VALIDSIG` against
+`signing_key()` and names the offending key when it does not.
+
 **reprepro, not aptly.** aptly hardcodes `--digest-algo SHA256` when it shells
 out to gpg, and the key is ECDSA on NIST P-384, which cannot produce a SHA256
 signature — `gpg: signing failed: Invalid length`. There is no aptly option for

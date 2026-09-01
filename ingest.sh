@@ -62,7 +62,7 @@ if [[ "$SIGNED" == true ]]; then
             echo "run sign-release.sh in that repository before ingesting" >&2
             exit 1
         fi
-        gpg --verify "$deb.asc" "$deb"
+        verify_sig "$deb.asc" "$deb"
     done
 fi
 
@@ -76,7 +76,7 @@ if [[ "$USE_MANIFEST" == true ]]; then
         exit 1
     fi
     [[ "$SIGNED" != true || -f "$manifest.asc" ]] || { echo "manifest.json is unsigned" >&2; exit 1; }
-    [[ "$SIGNED" != true ]] || gpg --verify "$manifest.asc" "$manifest"
+    [[ "$SIGNED" != true ]] || verify_sig "$manifest.asc" "$manifest"
     while IFS=$'\t' read -r file suite; do
         asset_suites["$file"]="${asset_suites["$file"]:-} $suite"
     done < <(jq -r '.[] | "\(.file)\t\(.suite)"' "$manifest")
