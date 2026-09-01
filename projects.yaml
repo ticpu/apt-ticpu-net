@@ -7,6 +7,11 @@
 # for each file. Use it whenever the same package name is rebuilt per distro —
 # no filename pattern can tell those apart, because each carries that distro's
 # own upstream version.
+#
+# `version_from_tag: true` asserts each package's version matches the tag. Set it
+# wherever the project versions its packages from git, which is everything except
+# the podman set: a release job checking out shallow has no tags, derives
+# 1.2.3+<sha> instead of 1.2.3, and publishes it without complaint.
 
 - name: bcachefs-storage-driver
   repo: ticpu/bcachefs-storage-driver
@@ -16,6 +21,7 @@
 - name: freeswitch-log-parser
   repo: ticpu/freeswitch-log-parser
   signed: true
+  version_from_tag: true
   assets:
   - glob: fslog_*.deb
     suites: [bookworm, trixie, noble, resolute, generic]
@@ -25,6 +31,7 @@
 - name: fs_cli-rs
   repo: ticpu/fs_cli-rs
   signed: true
+  version_from_tag: true
   assets:
   - glob: fs-cli_*.deb
     suites: [bookworm, trixie, noble, resolute, generic]
@@ -32,6 +39,15 @@
 - name: ticpu-claude-command-hook
   repo: ticpu/ticpu-claude-command-hook
   signed: true
+  version_from_tag: true
   assets:
   - glob: ticpu-claude-command-hook_*.deb
+    suites: [bookworm, trixie, noble, resolute, generic]
+
+- name: claude-conversation-search-mcp
+  repo: ticpu/claude-conversation-search-mcp
+  signed: true
+  version_from_tag: true
+  assets:
+  - glob: claude-conversation-search_*.deb
     suites: [bookworm, trixie, noble, resolute, generic]

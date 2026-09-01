@@ -34,14 +34,14 @@ names. The projects are the source of truth for their own packaging.
 | fslog | [freeswitch-log-parser](https://github.com/ticpu/freeswitch-log-parser) | all five | yes |
 | fs-cli | [fs_cli-rs](https://github.com/ticpu/fs_cli-rs) | all five | yes |
 | ticpu-claude-command-hook | [ticpu-claude-command-hook](https://github.com/ticpu/ticpu-claude-command-hook) | all five | yes |
+| claude-conversation-search | [claude-conversation-search-mcp](https://github.com/ticpu/claude-conversation-search-mcp) | all five | yes |
 | ticpu-archive-keyring | here, `make keyring` | all five | n/a |
 
 Everything ingested is signature-verified. Nothing here is `signed: false`, and
 adding a project that way should be a deliberate, temporary decision.
 
-Not in the archive yet: **ccusage-statusline-rs** and
-**claude-conversation-search-mcp** both have packaging on master and are waiting
-only on a release being cut.
+Not in the archive yet: **ccusage-statusline-rs** has packaging on master and is
+waiting only on a release being cut.
 
 ### The podman set is not uniform
 
@@ -105,9 +105,12 @@ aborts the whole run. That once left resolute without the podman a release
 existed for, because the suite processed before it hit a duplicate — and the run
 still delivered the earlier suite, so its exit status was the only sign.
 
-It **fails closed** on a `.deb` matching no suite, and on a missing signature for
-a project marked `signed: true`. Both are mappings gone stale, not things to
-skip past.
+It **fails closed** on a `.deb` matching no suite, on a missing signature for a
+project marked `signed: true`, and on a package version that disagrees with the
+tag under `version_from_tag: true`. That last one exists because a release job
+checking out shallow has no tags: version derivation falls through to the
+untagged form, stamps every package `1.2.3+<sha>`, and builds, signs and
+publishes it without complaint. Nothing upstream of the archive notices.
 
 ## The pin
 

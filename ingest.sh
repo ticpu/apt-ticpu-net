@@ -35,6 +35,7 @@ fi
 GH_REPO=$(jq -r .repo <<<"$project_json")
 SIGNED=$(jq -r '.signed // false' <<<"$project_json")
 USE_MANIFEST=$(jq -r '.manifest // false' <<<"$project_json")
+VERSION_FROM_TAG=$(jq -r '.version_from_tag // false' <<<"$project_json")
 
 if [[ -z "$TAG" ]]; then
     TAG=$(gh release view --repo "$GH_REPO" --json tagName --jq .tagName)
@@ -63,6 +64,22 @@ if [[ "$SIGNED" == true ]]; then
             exit 1
         fi
         verify_sig "$deb.asc" "$deb"
+    done
+fi
+
+# A release job that checks out shallow has no tags, so a version derived from
+# `git describe` falls through to the untagged form and stamps every package
+# 1.2.3+<sha>. It builds, signs and publishes without complaint, and the archive
+# would serve it as a version nobody released.
+if [[ "$VERSION_FROM_TAG" == true ]]; then
+    want="${TAG#v}"
+    for deb in "${debs[@]}"; do
+        got=$(dpkg-deb -f "$deb" Version)
+        if [[ "$got" != "$want" && "$got" != "$want"-* ]]; then
+            echo "${deb##*/} is version $got, but $TAG should have produced $want" >&2
+            echo "a shallow checkout in the release job does this" >&2
+            exit 1
+        fi
     done
 fi
 
