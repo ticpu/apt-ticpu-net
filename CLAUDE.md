@@ -33,17 +33,15 @@ names. The projects are the source of truth for their own packaging.
 | podman, podman-docker, podman-remote, containers-storage, golang-github-containers-{storage,image}{,-dev} | [bcachefs-storage-driver](https://github.com/ticpu/bcachefs-storage-driver) | trixie, noble, resolute | yes |
 | fslog | [freeswitch-log-parser](https://github.com/ticpu/freeswitch-log-parser) | all five | yes |
 | fs-cli | [fs_cli-rs](https://github.com/ticpu/fs_cli-rs) | all five | yes |
+| ticpu-claude-command-hook | [ticpu-claude-command-hook](https://github.com/ticpu/ticpu-claude-command-hook) | all five | yes |
 | ticpu-archive-keyring | here, `make keyring` | all five | n/a |
 
 Everything ingested is signature-verified. Nothing here is `signed: false`, and
 adding a project that way should be a deliberate, temporary decision.
 
 Not in the archive yet: **ccusage-statusline-rs** and
-**claude-conversation-search-mcp** build no `.deb` in-repo — ccusage's are made
-out-of-tree by the AUR clone's `deploy-aptly.sh` with makedeb, aimed at the
-cauca archive. **ticpu-claude-command-hook** does build them, under `cauca/`,
-but has no CI, no GitHub release and no signing, so there is nothing to ingest
-from; its control file also declares no `Depends`.
+**claude-conversation-search-mcp** both have packaging on master and are waiting
+only on a release being cut.
 
 ### The podman set is not uniform
 

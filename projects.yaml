@@ -28,3 +28,10 @@
   assets:
   - glob: fs-cli_*.deb
     suites: [bookworm, trixie, noble, resolute, generic]
+
+- name: ticpu-claude-command-hook
+  repo: ticpu/ticpu-claude-command-hook
+  signed: true
+  assets:
+  - glob: ticpu-claude-command-hook_*.deb
+    suites: [bookworm, trixie, noble, resolute, generic]
