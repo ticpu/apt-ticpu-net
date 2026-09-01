@@ -31,6 +31,13 @@ if [[ -d static ]]; then
     cp -a static/. "$BASE_DIR/"
 fi
 
+# A version-free path for the keyring, so every project's install snippet can
+# name it without going stale on the next keyring bump.
+keyring=$(find "$BASE_DIR/pool" -name 'ticpu-archive-keyring_*_all.deb' | sort -V | tail -1)
+if [[ -n "$keyring" ]]; then
+    cp -a "$keyring" "$BASE_DIR/ticpu-archive-keyring.deb"
+fi
+
 if (( SKIP_RSYNC )); then
     echo "exported to $BASE_DIR, not mirrored"
     exit 0

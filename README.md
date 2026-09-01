@@ -10,14 +10,20 @@ here.
 ## Using it
 
 ```bash
-curl -fsSLO https://apt.ticpu.net/pool/main/t/ticpu-archive-keyring/ticpu-archive-keyring_1.0_all.deb
-sudo dpkg -i ticpu-archive-keyring_1.0_all.deb
+curl -fsSLO https://apt.ticpu.net/ticpu-archive-keyring.deb
+sudo dpkg -i ticpu-archive-keyring.deb
 sudo apt-get update
 ```
 
 The keyring package installs the archive key and writes
 `/etc/apt/sources.list.d/ticpu.sources` for the suite matching your release. If
 your release has no suite here it says so and installs only the key.
+
+It also pins podman and containers/storage to this archive at priority 1001.
+Those are recompiled against a patched storage library and an archive build
+cannot start against a bcachefs graphroot, so version ordering must not be what
+decides which one is installed — the `+bcachefs1` suffix loses to the next
+archive revision.
 
 To set it up by hand instead. The key goes in `/etc/apt/keyrings`, which is
 where a key added by an administrator belongs; `/usr/share/keyrings` is dpkg's,
