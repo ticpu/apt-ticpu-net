@@ -8,3 +8,8 @@ Homepage: https://apt.ticpu.net
 Description: GnuPG archive key for apt.ticpu.net
  Installs the OpenPGP key apt uses to verify the apt.ticpu.net archive, and
  registers the suite matching this system's release.
+ .
+ Also pins the podman and containers/storage packages to this archive. Those
+ are recompiled against a patched storage library, and an archive build cannot
+ start against a bcachefs graphroot, so version ordering must not be what
+ decides which one is installed.

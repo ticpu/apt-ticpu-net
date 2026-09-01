@@ -1,0 +1,8 @@
+# podman here is recompiled against a patched containers/storage; an archive
+# build cannot start against a bcachefs graphroot. The +bcachefs1 suffix only
+# outranks the archive while the base version matches, so version ordering alone
+# loses to the next archive revision. Above 1000 so it wins even when the
+# archive's version is higher.
+Package: podman podman-docker podman-remote containers-storage golang-github-containers-storage-dev
+Pin: release o=ticpu
+Pin-Priority: 1001
