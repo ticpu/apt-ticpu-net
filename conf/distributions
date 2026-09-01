@@ -1,0 +1,36 @@
+Origin: ticpu
+Label: apt.ticpu.net
+Codename: bookworm
+Suite: bookworm
+Architectures: amd64 arm64
+Components: main
+Description: Packages built from github.com/ticpu
+SignWith: E5998E49DC9E1DCFDB9B46EC77EBA10790CFFCCD
+
+Origin: ticpu
+Label: apt.ticpu.net
+Codename: trixie
+Suite: trixie
+Architectures: amd64 arm64
+Components: main
+Description: Packages built from github.com/ticpu
+SignWith: E5998E49DC9E1DCFDB9B46EC77EBA10790CFFCCD
+
+Origin: ticpu
+Label: apt.ticpu.net
+Codename: noble
+Suite: noble
+Architectures: amd64 arm64
+Components: main
+Description: Packages built from github.com/ticpu
+SignWith: E5998E49DC9E1DCFDB9B46EC77EBA10790CFFCCD
+
+Origin: ticpu
+Label: apt.ticpu.net
+Codename: resolute
+Suite: resolute
+Architectures: amd64 arm64
+Components: main
+Description: Packages built from github.com/ticpu
+SignWith: E5998E49DC9E1DCFDB9B46EC77EBA10790CFFCCD
+

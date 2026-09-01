@@ -1,0 +1,21 @@
+# Which GitHub release assets go into which apt suites.
+#
+# `signed: true` makes a missing .asc a hard error rather than a warning, so a
+# project that has adopted signing cannot silently regress to unsigned uploads.
+#
+# `manifest: true` means the release carries a manifest.json naming the suite
+# for each file. Use it whenever the same package name is rebuilt per distro —
+# no filename pattern can tell those apart, because each carries that distro's
+# own upstream version.
+
+- name: bcachefs-storage-driver
+  repo: ticpu/bcachefs-storage-driver
+  signed: true
+  manifest: true
+
+- name: freeswitch-log-parser
+  repo: ticpu/freeswitch-log-parser
+  signed: false
+  assets:
+  - glob: fslog_*.deb
+    suites: [bookworm, trixie, noble, resolute]

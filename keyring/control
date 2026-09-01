@@ -1,0 +1,10 @@
+Package: ticpu-archive-keyring
+Version: replaced-by-makefile
+Architecture: all
+Maintainer: Jérôme Poulin <jeromepoulin@gmail.com>
+Section: misc
+Priority: optional
+Homepage: https://apt.ticpu.net
+Description: GnuPG archive key for apt.ticpu.net
+ Installs the OpenPGP key apt uses to verify the apt.ticpu.net archive, and
+ registers the suite matching this system's release.

@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+
+# Written by postinst rather than shipped, so dpkg does not know to remove it.
+if [ "$1" = purge ]; then
+    rm -f /etc/apt/sources.list.d/ticpu.sources
+fi
+
+exit 0
