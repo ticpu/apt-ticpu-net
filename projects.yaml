@@ -15,7 +15,7 @@
 
 - name: freeswitch-log-parser
   repo: ticpu/freeswitch-log-parser
-  signed: false
+  signed: true
   assets:
   - glob: fslog_*.deb
     suites: [bookworm, trixie, noble, resolute]
