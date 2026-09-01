@@ -16,16 +16,19 @@ names. The projects are the source of truth for their own packaging.
 | package | built by | suites | signed |
 | --- | --- | --- | --- |
 | podman, podman-docker, podman-remote, containers-storage, golang-github-containers-{storage,image}{,-dev} | [bcachefs-storage-driver](https://github.com/ticpu/bcachefs-storage-driver) | trixie, noble, resolute | yes |
-| fslog | [freeswitch-log-parser](https://github.com/ticpu/freeswitch-log-parser) | all four | not yet |
+| fslog | [freeswitch-log-parser](https://github.com/ticpu/freeswitch-log-parser) | all four | yes |
+| fs-cli | [fs_cli-rs](https://github.com/ticpu/fs_cli-rs) | all four | yes |
 | ticpu-archive-keyring | here, `make keyring` | all four | n/a |
 
-Not in the archive yet, and why: **fs_cli-rs** is registered in `projects.yaml`
-but waiting on its first release to carry a `.deb` — v1.4.4 onwards, which
-also has the derived `Depends` and draft-then-sign it previously lacked.
-**ccusage-statusline-rs**
-and **claude-conversation-search-mcp** build no `.deb` in-repo; ccusage's debs
-are made out-of-tree by the AUR clone's `deploy-aptly.sh` with makedeb, aimed at
-a different archive.
+Everything ingested is signature-verified. Nothing here is `signed: false`, and
+adding a project that way should be a deliberate, temporary decision.
+
+Not in the archive yet: **ccusage-statusline-rs** and
+**claude-conversation-search-mcp** build no `.deb` in-repo — ccusage's are made
+out-of-tree by the AUR clone's `deploy-aptly.sh` with makedeb, aimed at the
+cauca archive. **ticpu-claude-command-hook** does build them, under `cauca/`,
+but has no CI, no GitHub release and no signing, so there is nothing to ingest
+from; its control file also declares no `Depends`.
 
 ### The podman set is not uniform
 
