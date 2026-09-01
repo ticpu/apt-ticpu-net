@@ -1,0 +1,120 @@
+# apt.ticpu.net
+
+A Debian/Ubuntu archive for packages built out of github.com/ticpu, covering
+bookworm, trixie, noble and resolute. Arch is on the AUR and deliberately not
+here.
+
+README.md is user-facing: how to add the archive, how to publish. This file is
+the provenance of the packages and the traps.
+
+## Where the packages come from
+
+Nothing is built here. `ingest.sh` downloads a project's GitHub release,
+verifies the signatures, and files each `.deb` into the suites `projects.yaml`
+names. The projects are the source of truth for their own packaging.
+
+| package | built by | suites | signed |
+| --- | --- | --- | --- |
+| podman, podman-docker, podman-remote, containers-storage, golang-github-containers-{storage,image}{,-dev} | [bcachefs-storage-driver](https://github.com/ticpu/bcachefs-storage-driver) | trixie, noble, resolute | yes |
+| fslog | [freeswitch-log-parser](https://github.com/ticpu/freeswitch-log-parser) | all four | not yet |
+| ticpu-archive-keyring | here, `make keyring` | all four | n/a |
+
+Not in the archive yet, and why: **fs_cli-rs** publishes only bare binaries, its
+CI never runs `make deb`, and its control file declares no `Depends` at all —
+apt would offer it to a host whose glibc cannot run it. **ccusage-statusline-rs**
+and **claude-conversation-search-mcp** build no `.deb` in-repo; ccusage's debs
+are made out-of-tree by the AUR clone's `deploy-aptly.sh` with makedeb, aimed at
+a different archive.
+
+### The podman set is not uniform
+
+Only podman and containers/storage are rebuilt per distro, each carrying that
+distro's own upstream version, so **no filename pattern can tell a noble build
+from a trixie one**. That is why bcachefs-storage-driver's release carries a
+`manifest.json` naming the suite per file and `projects.yaml` marks it
+`manifest: true`. Everything else is a portable single binary published into
+every suite unchanged.
+
+trixie and resolute carry podman `+bcachefs2`: they also build a patched
+`golang-github-containers-image` for a registry auth-scope fix unrelated to
+bcachefs. noble stays `+bcachefs1`. When
+[PR 1130](https://github.com/podman-container-tools/container-libs/pull/1130)
+merges, that patch goes away upstream and podman there **returns to
+`+bcachefs1`** — a version going backwards on purpose.
+
+**bookworm gets no podman**, and cannot: it ships containers/storage 1.43.0 and
+the driver needs 1.57 (noble's 1.51 already costs a fork). It carries fslog and
+the keyring only.
+
+## Signing
+
+`conf/distributions` names the key in `SignWith:` and is the only place it
+appears; `config.sh`'s `signing_key()` reads it back. The same key signs the
+release assets ingest verifies, so a hand-downloaded `.deb` and the archive it
+also lives in answer to one identity.
+
+**reprepro, not aptly.** aptly hardcodes `--digest-algo SHA256` when it shells
+out to gpg, and the key is ECDSA on NIST P-384, which cannot produce a SHA256
+signature — `gpg: signing failed: Invalid length`. There is no aptly option for
+it and its `internal` provider cannot read a gpg 2.1+ keyring. reprepro signs
+through gpgme, which takes the digest from the key.
+
+**Releases are immutable now.** Assets cannot be added to a published release,
+so a project's signatures have to land while its release is still a draft. A
+release that went public unsigned can never be signed — its packages are
+ingestable only with `signed: false`, which skips verification entirely.
+
+## Publishing
+
+Publishing runs on the workstation because the key does. p4 only ever receives
+an rsync of a finished tree and holds nothing secret.
+
+`publish.sh` rsyncs **pool before dists, and prunes last**. An index naming a
+`.deb` that has not landed is a 404 for everyone running `apt-get update` in
+that window; the other order merely serves a stale index for a few seconds.
+Never rsync `$BASE_DIR` recursively — `conf/` and reprepro's `db/` live there.
+
+`ingest.sh` **skips a package already present at the same name and version.**
+Every release rebuilds every package, so ones whose version did not change come
+back with different bytes; reprepro refuses two builds under one version and
+aborts the whole run. That once left resolute without the podman a release
+existed for, because the suite processed before it hit a duplicate — and the run
+still delivered the earlier suite, so its exit status was the only sign.
+
+It **fails closed** on a `.deb` matching no suite, and on a missing signature for
+a project marked `signed: true`. Both are mappings gone stale, not things to
+skip past.
+
+## The pin
+
+`ticpu-archive-keyring` ships `/etc/apt/preferences.d/ticpu-podman` at priority
+1001, so this origin wins even when the archive's version is higher. Without it
+the `+bcachefs` suffix loses to the next archive revision and apt installs a
+podman that cannot start against a bcachefs graphroot. Verified against a
+stand-in package at version 99.0.0.
+
+containers/image is in the pinned set for a second reason: on trixie and
+resolute it carries the auth-scope fix, and an archive copy would take that back
+out of a working install.
+
+The cauca GitLab runners ship the key and this pin **directly from puppet**
+rather than installing the package, so their copy is a fork — a change here does
+not reach them. Tell that session (`manage-runners-apt-repositories`) when the
+pinned set changes.
+
+## Gotchas
+
+- **`/etc/apt/keyrings`, not `/usr/share/keyrings`,** for a key added by hand.
+  The latter is dpkg's; only the keyring package writes there.
+- **A host AppArmor profile confines containerised curl.** `/etc/apparmor.d/curl`
+  attaches by executable path, so a container's `/usr/bin/curl` inherits it and
+  can only write under `$HOME` and user-tmp. `curl -o /etc/apt/keyrings/...`
+  inside a container fails with a bare `curl: (23)` and no mention of AppArmor.
+- **Cloudflare caches by extension and `.deb` is not on its list**, so origin
+  `Cache-Control` alone caches nothing. Two cache rules do the work: `/pool/*`
+  eligible (immutable content, safe to cache hard), `/dists/*` bypassed. Getting
+  those backwards serves a stale `InRelease` against fresh `Packages`, which
+  surfaces as a hash mismatch blaming the archive.
+- `gpg --export` prompts to overwrite an existing file and fails with
+  `cannot open '/dev/tty'` when there is no terminal. `bootstrap.sh` passes
+  `--yes`; the error names a tty and means nothing of the sort.
