@@ -1,8 +1,12 @@
 # podman here is recompiled against a patched containers/storage; an archive
-# build cannot start against a bcachefs graphroot. The +bcachefs1 suffix only
+# build cannot start against a bcachefs graphroot. The +bcachefs suffix only
 # outranks the archive while the base version matches, so version ordering alone
 # loses to the next archive revision. Above 1000 so it wins even when the
 # archive's version is higher.
-Package: podman podman-docker podman-remote containers-storage golang-github-containers-storage-dev
+#
+# containers/image is listed for a second reason: on trixie and resolute it
+# carries a registry auth-scope fix podman is built against, and an archive copy
+# would take that back out.
+Package: podman podman-docker podman-remote containers-storage golang-github-containers-storage-dev golang-github-containers-image golang-github-containers-image-dev
 Pin: release o=ticpu
 Pin-Priority: 1001
