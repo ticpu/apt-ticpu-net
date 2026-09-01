@@ -119,8 +119,26 @@ if (( DRY_RUN )); then
 fi
 
 for suite in "${!suite_files[@]}"; do
-    # shellcheck disable=SC2086  # deliberate word splitting of the file list
-    "${REPREPRO[@]}" includedeb "$suite" ${suite_files[$suite]}
+    # Every release rebuilds every package, so the ones whose version did not
+    # change come back with different bytes under the same version. reprepro
+    # refuses that, and rightly — but it is not an error here, there is simply
+    # nothing new to deliver. Skipping keeps one aborted package from stopping
+    # the suites that follow.
+    present=$("${REPREPRO[@]}" list "$suite" | awk '{print $2, $3}' | sort -u)
+    add=()
+    for f in ${suite_files[$suite]}; do
+        nv="$(dpkg-deb -f "$f" Package) $(dpkg-deb -f "$f" Version)"
+        if grep -qxF "$nv" <<<"$present"; then
+            echo "$suite: $nv already present, skipping"
+            continue
+        fi
+        add+=("$f")
+    done
+    if (( ${#add[@]} == 0 )); then
+        echo "$suite: nothing to add"
+        continue
+    fi
+    "${REPREPRO[@]}" includedeb "$suite" "${add[@]}"
 done
 
 ./publish.sh
