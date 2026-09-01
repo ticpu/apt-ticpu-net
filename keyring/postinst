@@ -6,21 +6,26 @@ SOURCES=/etc/apt/sources.list.d/ticpu.sources
 if [ "$1" = configure ] && [ ! -e "$SOURCES" ]; then
     # shellcheck disable=SC1091
     . /etc/os-release
+
+    # generic carries the portable single-binary tools, which are one build for
+    # every release. A codename suite adds what is rebuilt per distro — podman
+    # and containers/storage — and only exists for the ones that are.
     case "${VERSION_CODENAME:-}" in
-    bookworm|trixie|noble|resolute)
-        cat > "$SOURCES" <<SOURCESEOF
+    bookworm|trixie|noble|resolute) suites="${VERSION_CODENAME} generic" ;;
+    *)
+        suites=generic
+        echo "ticpu-archive-keyring: no per-release suite for '${VERSION_CODENAME:-unknown}'," >&2
+        echo "using generic, which carries the portable tools but not podman." >&2
+        ;;
+    esac
+
+    cat > "$SOURCES" <<SOURCESEOF
 Types: deb
 URIs: https://apt.ticpu.net
-Suites: ${VERSION_CODENAME}
+Suites: ${suites}
 Components: main
 Signed-By: /usr/share/keyrings/ticpu-archive-keyring.gpg
 SOURCESEOF
-        ;;
-    *)
-        echo "ticpu-archive-keyring: apt.ticpu.net carries no suite for '${VERSION_CODENAME:-unknown}'." >&2
-        echo "The key is installed; write $SOURCES yourself if another suite fits." >&2
-        ;;
-    esac
 fi
 
 exit 0

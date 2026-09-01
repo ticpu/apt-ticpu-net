@@ -18,7 +18,7 @@
   signed: true
   assets:
   - glob: fslog_*.deb
-    suites: [bookworm, trixie, noble, resolute]
+    suites: [bookworm, trixie, noble, resolute, generic]
 
 # v1.4.4 is its first release carrying a .deb; earlier tags shipped only bare
 # binaries and would fail the signed check anyway.
@@ -27,4 +27,4 @@
   signed: true
   assets:
   - glob: fs-cli_*.deb
-    suites: [bookworm, trixie, noble, resolute]
+    suites: [bookworm, trixie, noble, resolute, generic]

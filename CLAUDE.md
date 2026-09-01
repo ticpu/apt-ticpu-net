@@ -1,8 +1,23 @@
 # apt.ticpu.net
 
-A Debian/Ubuntu archive for packages built out of github.com/ticpu, covering
-bookworm, trixie, noble and resolute. Arch is on the AUR and deliberately not
-here.
+A Debian/Ubuntu archive for packages built out of github.com/ticpu. Arch is on
+the AUR and deliberately not here.
+
+Five suites, and the split is the important part. **`generic` carries the
+portable single-binary tools** — one build, no per-release difference, installable
+on any Debian or Ubuntu above the packages' glibc floor. The four codename
+suites (bookworm, trixie, noble, resolute) add only what is genuinely rebuilt per
+distro, which today means podman and containers/storage.
+
+Without `generic`, a release with no suite of its own — jammy, forky, sid,
+whatever ships next — got the key and no sources file at all, and the only way in
+would have been to add an older distro's suite. The keyring's postinst writes
+`Suites: <codename> generic` when it recognises the release and `Suites: generic`
+when it does not, so the fallback is a working install rather than a wrong one.
+
+Portable packages are published into the codename suites **as well as**
+`generic`. That is redundant, and deliberate: installs predating `generic` have
+only their codename suite, and dropping the duplicate would strand them.
 
 README.md is user-facing: how to add the archive, how to publish. This file is
 the provenance of the packages and the traps.
@@ -16,9 +31,9 @@ names. The projects are the source of truth for their own packaging.
 | package | built by | suites | signed |
 | --- | --- | --- | --- |
 | podman, podman-docker, podman-remote, containers-storage, golang-github-containers-{storage,image}{,-dev} | [bcachefs-storage-driver](https://github.com/ticpu/bcachefs-storage-driver) | trixie, noble, resolute | yes |
-| fslog | [freeswitch-log-parser](https://github.com/ticpu/freeswitch-log-parser) | all four | yes |
-| fs-cli | [fs_cli-rs](https://github.com/ticpu/fs_cli-rs) | all four | yes |
-| ticpu-archive-keyring | here, `make keyring` | all four | n/a |
+| fslog | [freeswitch-log-parser](https://github.com/ticpu/freeswitch-log-parser) | all five | yes |
+| fs-cli | [fs_cli-rs](https://github.com/ticpu/fs_cli-rs) | all five | yes |
+| ticpu-archive-keyring | here, `make keyring` | all five | n/a |
 
 Everything ingested is signature-verified. Nothing here is `signed: false`, and
 adding a project that way should be a deliberate, temporary decision.

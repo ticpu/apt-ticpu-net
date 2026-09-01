@@ -1,8 +1,14 @@
 # apt.ticpu.net
 
 A Debian/Ubuntu archive for the packages built out of
-[github.com/ticpu](https://github.com/ticpu/), covering Debian 12 (bookworm),
-Debian 13 (trixie), Ubuntu 24.04 (noble) and Ubuntu 26.04 (resolute).
+[github.com/ticpu](https://github.com/ticpu/).
+
+The portable single-binary tools install on **any** Debian or Ubuntu, from a
+`generic` suite. Debian 12 (bookworm), Debian 13 (trixie), Ubuntu 24.04 (noble)
+and Ubuntu 26.04 (resolute) additionally get podman and containers/storage,
+which are rebuilt per release. On anything else you get the tools and a note
+saying podman is not available there — you never need to add another release's
+suite to install something.
 
 Arch packages are on the [AUR](https://aur.archlinux.org/packages?K=ticpu), not
 here.

@@ -1,5 +1,5 @@
 NAME := ticpu-archive-keyring
-VERSION := 1.2
+VERSION := 1.3
 KEY := static/$(NAME).gpg
 DEB := dist/$(NAME)_$(VERSION)_all.deb
 PKG := build/$(NAME)

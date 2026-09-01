@@ -34,3 +34,12 @@ Components: main
 Description: Packages built from github.com/ticpu
 SignWith: E5998E49DC9E1DCFDB9B46EC77EBA10790CFFCCD
 
+Origin: ticpu
+Label: apt.ticpu.net
+Codename: generic
+Suite: generic
+Architectures: amd64 arm64
+Components: main
+Description: Portable single-binary tools, for releases with no suite of their own
+SignWith: E5998E49DC9E1DCFDB9B46EC77EBA10790CFFCCD
+

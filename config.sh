@@ -2,7 +2,7 @@
 # shellcheck shell=bash
 # shellcheck disable=SC2034  # consumed by the scripts that source this
 
-SUITES=(bookworm trixie noble resolute)
+SUITES=(bookworm trixie noble resolute generic)
 
 RSYNC_TARGET=p4:/srv/http/apt/
 
