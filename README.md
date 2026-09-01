@@ -19,10 +19,13 @@ The keyring package installs the archive key and writes
 `/etc/apt/sources.list.d/ticpu.sources` for the suite matching your release. If
 your release has no suite here it says so and installs only the key.
 
-To set it up by hand instead:
+To set it up by hand instead. The key goes in `/etc/apt/keyrings`, which is
+where a key added by an administrator belongs; `/usr/share/keyrings` is dpkg's,
+and only the keyring package above may write there:
 
 ```bash
-sudo curl -fsSLo /usr/share/keyrings/ticpu-archive-keyring.gpg \
+sudo install -d -m 755 /etc/apt/keyrings
+sudo curl -fsSLo /etc/apt/keyrings/ticpu-archive-keyring.gpg \
     https://apt.ticpu.net/ticpu-archive-keyring.gpg
 . /etc/os-release
 sudo tee /etc/apt/sources.list.d/ticpu.sources <<SOURCES
@@ -30,7 +33,7 @@ Types: deb
 URIs: https://apt.ticpu.net
 Suites: ${VERSION_CODENAME}
 Components: main
-Signed-By: /usr/share/keyrings/ticpu-archive-keyring.gpg
+Signed-By: /etc/apt/keyrings/ticpu-archive-keyring.gpg
 SOURCES
 ```
 
