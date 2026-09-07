@@ -1,3 +1,7 @@
+# Limit: 0 keeps every version ever ingested. reprepro's default of 1 drops the
+# previous one the moment a new one lands, so a release that turns out broken
+# leaves nothing to pin back to. versions.sh is how old ones come out.
+
 Origin: ticpu
 Label: apt.ticpu.net
 Codename: bookworm
@@ -5,6 +9,7 @@ Suite: bookworm
 Architectures: amd64 arm64
 Components: main
 Description: Packages built from github.com/ticpu
+Limit: 0
 SignWith: E5998E49DC9E1DCFDB9B46EC77EBA10790CFFCCD
 
 Origin: ticpu
@@ -14,6 +19,7 @@ Suite: trixie
 Architectures: amd64 arm64
 Components: main
 Description: Packages built from github.com/ticpu
+Limit: 0
 SignWith: E5998E49DC9E1DCFDB9B46EC77EBA10790CFFCCD
 
 Origin: ticpu
@@ -23,6 +29,7 @@ Suite: noble
 Architectures: amd64 arm64
 Components: main
 Description: Packages built from github.com/ticpu
+Limit: 0
 SignWith: E5998E49DC9E1DCFDB9B46EC77EBA10790CFFCCD
 
 Origin: ticpu
@@ -32,6 +39,7 @@ Suite: resolute
 Architectures: amd64 arm64
 Components: main
 Description: Packages built from github.com/ticpu
+Limit: 0
 SignWith: E5998E49DC9E1DCFDB9B46EC77EBA10790CFFCCD
 
 Origin: ticpu
@@ -41,5 +49,6 @@ Suite: generic
 Architectures: amd64 arm64
 Components: main
 Description: Portable single-binary tools, for releases with no suite of their own
+Limit: 0
 SignWith: E5998E49DC9E1DCFDB9B46EC77EBA10790CFFCCD
 
