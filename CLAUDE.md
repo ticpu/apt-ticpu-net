@@ -61,8 +61,19 @@ part rather than trusting it:
    the rest.
 
 What ingest refuses: an asset signed by any other key, a missing signature, a
-`.deb` matching no suite, and a version that disagrees with the tag. All four
-are conditions that would otherwise be discovered by a user rather than here.
+`.deb` matching no suite, a version that disagrees with the tag, a package
+needing a newer glibc than the suite it is mapped into ships, and a `Depends`
+asking for less glibc than the binary's own symbol versions need. All six are
+conditions that would otherwise be discovered by a user rather than here.
+
+The last two are read off the ELF, not off `Depends`. `Depends` is a claim the
+project typed; a correct one that is too high merely makes apt refuse the
+install, which is visible. The silent failure is a claim that understates the
+binary — that package installs cleanly everywhere and dies at exec on a missing
+symbol version, and only the ELF shows it. `SUITE_GLIBC` in `config.sh` holds
+each suite's ceiling; `generic` is deliberately absent from it, meaning it takes
+nothing dynamically linked at all, because it serves releases whose glibc nobody
+here knows. `audit.sh` runs the same check over what is already published.
 
 The per-repo packaging conventions that made this work — deriving the glibc
 floor and the whole `Depends` set from the built binary rather than typing
@@ -131,6 +142,12 @@ back with different bytes; reprepro refuses two builds under one version and
 aborts the whole run. That once left resolute without the podman a release
 existed for, because the suite processed before it hit a duplicate — and the run
 still delivered the earlier suite, so its exit status was the only sign.
+
+Every suite carries `Limit: 0`, so **no ingest ever drops the version it
+replaces** — reprepro's default of 1 removes the predecessor the moment a new
+build lands, which leaves nothing to pin back to when a release turns out
+broken. Pruning is `versions.sh remove`, one version from one suite, and it
+republishes afterwards.
 
 It **fails closed** on a `.deb` matching no suite, on a missing signature for a
 project marked `signed: true`, and on a package version that disagrees with the

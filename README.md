@@ -54,9 +54,13 @@ SOURCES
 Package sets are pulled from each project's GitHub release. `projects.yaml`
 says which assets belong to which suites.
 
-Single-binary tools are built against a low glibc floor and published into every
-suite unchanged. Only podman and containers-storage are rebuilt per distro,
-because each carries that distro's own upstream version.
+Single-binary tools are published into every suite unchanged. Only podman and
+containers-storage are rebuilt per distro, because each carries that distro's
+own upstream version.
+
+`generic` takes no dynamically linked package at all. It serves releases with no
+suite of their own, of a vintage nobody here knows, so a glibc floor cannot be
+checked against anything — a static-pie musl build has none to check.
 
 ## Publishing
 
@@ -74,15 +78,23 @@ signs through gpgme, which takes the digest from the key.
 make publish-keyring                             # once, and on every key or suite change
 ./ingest.sh bcachefs-storage-driver v1.3.0       # pull a release into the archive
 ./ingest.sh freeswitch-log-parser                # omit the tag for the latest release
+./audit.sh                                       # what is published that no longer fits its suite
+./versions.sh list                               # every version in every suite
+./versions.sh remove generic fs-cli 1.4.4        # take one back out, then republish
 ```
 
 `ingest.sh -n` downloads and resolves suites without touching the archive.
 `publish.sh --local` signs and publishes without mirroring.
 
+Every version ingested stays until `versions.sh remove` takes it out, so a
+release that turns out broken always has a predecessor left to pin back to.
+
 Ingest refuses a project declared `signed: true` whose assets carry no
 signature, and refuses to continue if any `.deb` in a release matches no suite —
 a mapping that has gone stale is a release published with packages missing, not
-something to skip past.
+something to skip past. It also refuses a package needing a newer glibc than a
+suite it is mapped into ships, and one whose `Depends` asks for less than its
+binary needs: that one installs anywhere and dies at exec on a symbol version.
 
 ## Serving
 
