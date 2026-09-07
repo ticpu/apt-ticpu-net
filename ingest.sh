@@ -131,6 +131,26 @@ done
 # silently dropping it publishes a release missing packages users expect.
 (( unmatched == 0 )) || exit 1
 
+# A package whose ELF needs a newer glibc than a suite ships installs there and
+# dies at exec, which is a user's discovery rather than the archive's. Collect
+# every offence so one run names them all.
+floor_fail=0
+for deb in "${debs[@]}"; do
+    name="${deb##*/}"
+    elf=$(deb_glibc_floor "$deb" "$WORKDIR/unpack/$name")
+    IFS=$'\t' read -r interp floor <<<"$elf"
+    declared=$(deb_declared_floor "$deb")
+    if [[ -n "$floor" ]] && { [[ -z "$declared" ]] || dpkg --compare-versions "$declared" lt "$floor"; }; then
+        echo "$name needs glibc $floor but Depends asks for ${declared:-no libc6 at all}" >&2
+        echo "  apt would install it anywhere and it would fail at exec" >&2
+        floor_fail=1
+    fi
+    for suite in ${asset_suites[$name]}; do
+        check_floor_against_suite "$name" "$floor" "$interp" "$suite" || floor_fail=1
+    done
+done
+(( floor_fail == 0 )) || exit 1
+
 # Invert to suite -> files, so each suite takes one aptly call.
 declare -A suite_files=()
 for file in "${!asset_suites[@]}"; do

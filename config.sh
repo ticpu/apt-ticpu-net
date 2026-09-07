@@ -4,6 +4,17 @@
 
 SUITES=(bookworm trixie noble resolute generic)
 
+# The glibc each suite's distribution ships, read off packages.debian.org and
+# packages.ubuntu.com. generic has no entry on purpose: it exists for releases
+# with no suite of their own, of unknown vintage, so nothing with a glibc floor
+# belongs in it.
+declare -A SUITE_GLIBC=(
+    [bookworm]=2.36
+    [trixie]=2.41
+    [noble]=2.39
+    [resolute]=2.43
+)
+
 RSYNC_TARGET=p4:/srv/http/apt/
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -45,4 +56,43 @@ verify_sig() {
         awk '/^\[GNUPG:\] VALIDSIG /{print "  signed by " $3}' <<<"$status" >&2
         return 1
     fi
+}
+
+# Depends is a claim the project typed; a claim that understates the ELF
+# installs cleanly and dies at exec on a missing symbol version. Read the
+# binary instead. Prints "<interp>\t<floor>" — that order because the floor is
+# empty for a package with no glibc symbols, and a trailing empty field survives
+# `read` where a leading one does not.
+deb_glibc_floor() {
+    local deb="$1" dir="$2" f v magic floor="" interp=no
+    command -v readelf >/dev/null || { echo "readelf not found; install binutils" >&2; return 1; }
+    mkdir -p "$dir"
+    dpkg-deb --fsys-tarfile "$deb" | tar -x -C "$dir"
+    while IFS= read -r -d '' f; do
+        IFS= read -rn4 magic < "$f" || true
+        [[ $magic == $'\x7fELF' ]] || continue
+        readelf -lW "$f" | grep -q INTERP && interp=yes
+        v=$(readelf --dyn-syms -W "$f" | grep -oP '@+GLIBC_\K[0-9]+(\.[0-9]+)+' | sort -V | tail -1)
+        [[ -z "$v" ]] || floor=$(printf '%s\n%s\n' "$floor" "$v" | sort -V | tail -1)
+    done < <(find "$dir" -type f -print0)
+    printf '%s\t%s\n' "$interp" "$floor"
+}
+
+deb_declared_floor() {
+    dpkg-deb -f "$1" Depends | grep -oP 'libc6[^,]*\(\s*>=\s*\K[0-9][^-)]*' | sort -V | tail -1 || true
+}
+
+# One package against one suite. Prints why it does not belong and returns 1.
+check_floor_against_suite() {
+    local name="$1" floor="$2" interp="$3" suite="$4" ceiling="${SUITE_GLIBC[$4]:-}"
+    if [[ -z "$ceiling" ]]; then
+        [[ -n "$floor" || "$interp" == yes ]] || return 0
+        echo "$suite: $name is dynamically linked (glibc ${floor:-none}, interpreter $interp)" >&2
+        echo "  $suite serves releases with no suite of their own, so it takes no glibc floor" >&2
+        echo "  build it static-pie against musl, or drop $suite from its glob in projects.yaml" >&2
+        return 1
+    fi
+    [[ -n "$floor" ]] && dpkg --compare-versions "$floor" gt "$ceiling" || return 0
+    echo "$suite: $name needs glibc $floor, $suite ships $ceiling" >&2
+    return 1
 }
