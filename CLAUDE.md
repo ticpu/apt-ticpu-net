@@ -173,6 +173,15 @@ rather than installing the package, so their copy is a fork — a change here do
 not reach them. Tell that session (`manage-runners-apt-repositories`) when the
 pinned set changes.
 
+## Commits
+
+A change to what the archive carries takes the `package:` prefix, not `feat:` —
+adding or dropping a project in `projects.yaml`, changing which suites an asset
+maps to, changing a glob. `feat:`, `fix:` and `docs:` stay for the scripts and
+the documentation around them, which is the split that makes `git log --grep
+'^package:'` answer what the archive gained and lost. The `feat: carry …`
+commits predate the prefix.
+
 ## Gotchas
 
 - **`/etc/apt/keyrings`, not `/usr/share/keyrings`,** for a key added by hand.
