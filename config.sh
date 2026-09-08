@@ -10,7 +10,16 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # conf/ is version-controlled here; the pool, the indexes and reprepro's own
 # database are build output and stay out of the repository.
-BASE_DIR="$HOME/.local/share/apt-ticpu-net"
+#
+# Running on the same host RSYNC_TARGET names, BASE_DIR is that path directly:
+# there is nothing to mirror to. Anywhere else it's a per-machine copy that
+# publish.sh keeps in sync with --delete, so an empty one is stale state, not
+# a fresh start.
+if [[ "${RSYNC_TARGET%%:*}" == "$(hostname)" ]]; then
+    BASE_DIR="${RSYNC_TARGET#*:}"
+else
+    BASE_DIR="$HOME/.local/share/apt-ticpu-net"
+fi
 REPREPRO=(reprepro --confdir "$REPO_DIR/conf" --basedir "$BASE_DIR")
 
 # conf/distributions is the only place the key is named. reprepro signs through

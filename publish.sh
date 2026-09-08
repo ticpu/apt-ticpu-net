@@ -43,6 +43,21 @@ if (( SKIP_RSYNC )); then
     exit 0
 fi
 
+if [[ "${RSYNC_TARGET%%:*}" == "$(hostname)" ]]; then
+    echo "exported to $BASE_DIR, which is $RSYNC_TARGET: nothing to mirror"
+    exit 0
+fi
+
+# A pool this empty on a machine that isn't the archive itself is a mirror
+# nobody has ever synced down from it, not an archive that has nothing in it
+# yet. Publishing from it would rsync --delete everything real on the far end.
+pool_count=$(find "$BASE_DIR/pool" -name '*.deb' 2>/dev/null | wc -l)
+if (( pool_count < 10 )); then
+    echo "$BASE_DIR/pool has only $pool_count .deb files, refusing to publish" >&2
+    echo "sync it from $RSYNC_TARGET first: rsync -a $RSYNC_TARGET/ $BASE_DIR/" >&2
+    exit 1
+fi
+
 rsync_flags=(-rlptDv --human-readable)
 (( DRY_RUN )) && rsync_flags+=(--dry-run)
 

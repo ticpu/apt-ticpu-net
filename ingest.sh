@@ -5,6 +5,20 @@ set -euo pipefail
 cd "$(dirname "$0")"
 source ./config.sh
 
+# kislyuk/yq (the Python one) also answers to `yq` and forwards unknown flags
+# straight to jq, so `-o=json` fails as a jq error that names no yq anywhere.
+if ! yq --version 2>&1 | grep -q mikefarah; then
+    echo "yq is not mikefarah/yq (https://github.com/mikefarah/yq/); this script needs that one, not the Python kislyuk/yq" >&2
+    echo "install it with: pacman -S go-yq" >&2
+    exit 1
+fi
+
+if ! command -v reprepro >/dev/null; then
+    echo "reprepro is not installed" >&2
+    echo "install it with: pacman -S reprepro" >&2
+    exit 1
+fi
+
 usage() {
     echo "usage: ${0##*/} [-n|--dry-run] PROJECT [TAG]" >&2
     echo "  PROJECT  a name from projects.yaml; TAG defaults to the latest release" >&2

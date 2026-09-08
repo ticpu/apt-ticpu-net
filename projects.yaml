@@ -59,3 +59,11 @@
   assets:
   - glob: ccusage-statusline-rs_*.deb
     suites: [bookworm, trixie, noble, resolute, generic]
+
+- name: keyleds
+  repo: ticpu/keyleds
+  signed: true
+  version_from_tag: true
+  assets:
+  - glob: keyleds*_*.deb
+    suites: [bookworm, trixie, noble, resolute, generic]
