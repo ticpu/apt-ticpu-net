@@ -69,10 +69,16 @@ deb_glibc_floor() {
     mkdir -p "$dir"
     dpkg-deb --fsys-tarfile "$deb" | tar -x -C "$dir"
     while IFS= read -r -d '' f; do
+        # Split debug files duplicate the binary's symbols and carry a PT_INTERP
+        # with no contents, which readelf reports as an error on each one.
+        [[ "$f" != */usr/lib/debug/* ]] || continue
         IFS= read -rn4 magic < "$f" || true
         [[ $magic == $'\x7fELF' ]] || continue
-        readelf -lW "$f" | grep -q INTERP && interp=yes
-        v=$(readelf --dyn-syms -W "$f" | grep -oP '@+GLIBC_\K[0-9]+(\.[0-9]+)+' | sort -V | tail -1)
+        # An ELF with no interpreter and no glibc symbol fails both greps, and
+        # under `set -e -o pipefail` that killed the scan mid-package: whatever
+        # came after went unread and the package reported no floor at all.
+        if readelf -SW "$f" | grep -q ' \.interp '; then interp=yes; fi
+        v=$(readelf --dyn-syms -W "$f" | grep -oP '@+GLIBC_\K[0-9]+(\.[0-9]+)+' | sort -V | tail -1 || true)
         [[ -z "$v" ]] || floor=$(printf '%s\n%s\n' "$floor" "$v" | sort -V | tail -1)
     done < <(find "$dir" -type f -print0)
     printf '%s\t%s\n' "$interp" "$floor"
@@ -80,6 +86,26 @@ deb_glibc_floor() {
 
 deb_declared_floor() {
     dpkg-deb -f "$1" Depends | grep -oP 'libc6[^,]*\(\s*>=\s*\K[0-9][^-)]*' | sort -V | tail -1 || true
+}
+
+# One .deb against every suite it is headed for, Depends included. Every path
+# that reaches `reprepro includedeb` calls this: keyleds went in around it once
+# and put a glibc 2.38 binary in generic.
+check_deb() {
+    local deb="$1" dir="$2" name interp floor declared suite rc=0
+    shift 2
+    name="${deb##*/}"
+    IFS=$'\t' read -r interp floor <<<"$(deb_glibc_floor "$deb" "$dir")"
+    declared=$(deb_declared_floor "$deb")
+    if [[ -n "$floor" ]] && { [[ -z "$declared" ]] || dpkg --compare-versions "$declared" lt "$floor"; }; then
+        echo "$name needs glibc $floor but Depends asks for ${declared:-no libc6 at all}" >&2
+        echo "  apt would install it anywhere and it would fail at exec" >&2
+        rc=1
+    fi
+    for suite in "$@"; do
+        check_floor_against_suite "$name" "$floor" "$interp" "$suite" || rc=1
+    done
+    return "$rc"
 }
 
 # One package against one suite. Prints why it does not belong and returns 1.
