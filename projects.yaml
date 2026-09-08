@@ -60,10 +60,12 @@
   - glob: ccusage-statusline-rs_*.deb
     suites: [bookworm, trixie, noble, resolute, generic]
 
+# The one dynamically linked package here: C++ against Qt and libudev, so it
+# takes neither generic nor bookworm, whose glibc 2.36 is below its 2.38.
 - name: keyleds
   repo: ticpu/keyleds
   signed: true
   version_from_tag: true
   assets:
   - glob: keyleds*_*.deb
-    suites: [bookworm, trixie, noble, resolute, generic]
+    suites: [trixie, noble, resolute]
