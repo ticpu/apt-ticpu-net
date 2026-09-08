@@ -46,6 +46,9 @@ for f in "${files[@]}"; do
 done
 (( fail == 0 )) || exit 1
 
+archive_begin
+trap 'rm -rf "$WORKDIR"; archive_unlock' EXIT
+
 for suite in "${suites[@]}"; do
     "${REPREPRO[@]}" includedeb "$suite" "${files[@]}"
 done

@@ -160,6 +160,9 @@ if (( DRY_RUN )); then
     exit 0
 fi
 
+archive_begin
+trap 'rm -rf "$WORKDIR"; archive_unlock' EXIT
+
 for suite in "${!suite_files[@]}"; do
     # Every release rebuilds every package, so the ones whose version did not
     # change come back with different bytes under the same version. reprepro

@@ -16,22 +16,58 @@ declare -A SUITE_GLIBC=(
 )
 
 RSYNC_TARGET=p4:/srv/http/apt/
+ARCHIVE_HOST="${RSYNC_TARGET%%:*}"
+ARCHIVE_PATH="${RSYNC_TARGET%/}"
+ARCHIVE_PATH="${ARCHIVE_PATH#*:}"
+ARCHIVE_LOCK="$ARCHIVE_PATH/publish.lock"
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # conf/ is version-controlled here; the pool, the indexes and reprepro's own
 # database are build output and stay out of the repository.
 #
-# Running on the same host RSYNC_TARGET names, BASE_DIR is that path directly:
-# there is nothing to mirror to. Anywhere else it's a per-machine copy that
-# publish.sh keeps in sync with --delete, so an empty one is stale state, not
-# a fresh start.
-if [[ "${RSYNC_TARGET%%:*}" == "$(hostname)" ]]; then
-    BASE_DIR="${RSYNC_TARGET#*:}"
-else
-    BASE_DIR="$HOME/.local/share/apt-ticpu-net"
-fi
+# The archive lives on ARCHIVE_HOST, always: db/ and pool/ together are its
+# state, and whichever db a run starts from is the one publish.sh's --delete
+# makes the far end match. This is a working copy, refreshed from there before
+# every write. Running reprepro against the archive path directly — which this
+# used to do when the hostname matched — forks that state instead, and the
+# archive then loses whatever the other db never learned about.
+BASE_DIR="$HOME/.local/share/apt-ticpu-net"
 REPREPRO=(reprepro --confdir "$REPO_DIR/conf" --basedir "$BASE_DIR")
+
+# Signing happens here because the key is here, so the writing does too, and
+# two writers against one Berkeley DB corrupt it. A symlink is the lock: ln -s
+# fails atomically when one exists, and its target names who holds it.
+archive_lock() {
+    local owner holder
+    owner="$(id -un)@$(hostname):$$"
+    if ! ssh "$ARCHIVE_HOST" ln -s "$owner" "$ARCHIVE_LOCK" 2>/dev/null; then
+        # shellcheck disable=SC2029  # the path is this side's to expand
+        holder=$(ssh "$ARCHIVE_HOST" readlink "$ARCHIVE_LOCK" || true)
+        echo "the archive is locked by ${holder:-someone}" >&2
+        echo "if that run is gone: ssh $ARCHIVE_HOST rm $ARCHIVE_LOCK" >&2
+        return 1
+    fi
+    export ARCHIVE_LOCKED=1
+}
+
+archive_unlock() {
+    [[ "${ARCHIVE_LOCKED:-0}" == 1 ]] || return 0
+    ssh "$ARCHIVE_HOST" rm -f "$ARCHIVE_LOCK"
+    ARCHIVE_LOCKED=0
+}
+
+# Every path that writes to the database calls this first, and traps
+# archive_unlock. publish.sh does not: it uploads what the writer just built,
+# and pulling first would take a removal straight back out.
+archive_begin() {
+    archive_lock || return 1
+    rsync -a --delete \
+        "$ARCHIVE_HOST:$ARCHIVE_PATH/pool" \
+        "$ARCHIVE_HOST:$ARCHIVE_PATH/dists" \
+        "$ARCHIVE_HOST:$ARCHIVE_PATH/db" \
+        "$BASE_DIR/"
+}
 
 # conf/distributions is the only place the key is named. reprepro signs through
 # gpgme, which takes the digest from the key itself — aptly hardcodes SHA256 and

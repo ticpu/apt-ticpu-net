@@ -32,6 +32,8 @@ list)
 remove)
     (( $# == 4 )) || usage
     suite="$2" package="$3" version="$4"
+    archive_begin
+    trap archive_unlock EXIT
     "${REPREPRO[@]}" removefilter "$suite" "Package (== $package), Version (== $version)"
     ./publish.sh
     ;;

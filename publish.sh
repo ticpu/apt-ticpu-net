@@ -21,6 +21,13 @@ while (( $# )); do
     shift
 done
 
+# Inherited from the ingest or add-local run that called this, which unlocks on
+# its own exit. Run on its own, this holds the lock for the export.
+if [[ "${ARCHIVE_LOCKED:-0}" != 1 ]]; then
+    archive_lock
+    trap archive_unlock EXIT
+fi
+
 for suite in "${SUITES[@]}"; do
     "${REPREPRO[@]}" export "$suite"
 done
@@ -43,14 +50,9 @@ if (( SKIP_RSYNC )); then
     exit 0
 fi
 
-if [[ "${RSYNC_TARGET%%:*}" == "$(hostname)" ]]; then
-    echo "exported to $BASE_DIR, which is $RSYNC_TARGET: nothing to mirror"
-    exit 0
-fi
-
-# A pool this empty on a machine that isn't the archive itself is a mirror
-# nobody has ever synced down from it, not an archive that has nothing in it
-# yet. Publishing from it would rsync --delete everything real on the far end.
+# A pool this empty is a working copy nobody has ever synced down, not an
+# archive that has nothing in it yet. Publishing from it would rsync --delete
+# everything real on the far end.
 pool_count=$(find "$BASE_DIR/pool" -name '*.deb' 2>/dev/null | wc -l)
 if (( pool_count < 10 )); then
     echo "$BASE_DIR/pool has only $pool_count .deb files, refusing to publish" >&2
@@ -68,8 +70,13 @@ rsync "${rsync_flags[@]}" "$BASE_DIR/pool/" "$RSYNC_TARGET/pool/"
 rsync "${rsync_flags[@]}" --delete "$BASE_DIR/dists/" "$RSYNC_TARGET/dists/"
 rsync "${rsync_flags[@]}" --delete "$BASE_DIR/pool/" "$RSYNC_TARGET/pool/"
 
-# Never a recursive sync of $BASE_DIR itself: conf/ and db/ live there too, and
-# db/ is reprepro's state, not something to publish.
+# db/ is not served, but it is the archive's state and it travels with it: a
+# working copy restored without it publishes its own gaps.
+rsync "${rsync_flags[@]}" --delete "$BASE_DIR/db/" "$RSYNC_TARGET/db/"
+
+# Never a recursive sync of $BASE_DIR itself: the three directories above each
+# go to their own place, and a recursive one would put db/ under the web root
+# twice over.
 for f in "$BASE_DIR"/*; do
     [[ -f "$f" ]] || continue
     rsync "${rsync_flags[@]}" "$f" "$RSYNC_TARGET"

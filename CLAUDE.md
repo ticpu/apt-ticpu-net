@@ -128,13 +128,33 @@ ingestable only with `signed: false`, which skips verification entirely.
 
 ## Publishing
 
-Publishing runs on the workstation because the key does. p4 only ever receives
-an rsync of a finished tree and holds nothing secret.
+Publishing runs on the workstation because the key does. p4 holds nothing
+secret and runs no reprepro.
+
+**p4 holds the archive; `$BASE_DIR` is a working copy.** The state is `db/` and
+`pool/` together, and whichever database a run starts from is the one
+publish.sh's `--delete` makes the far end match. So every writer — ingest.sh,
+add-local.sh, `versions.sh remove` — calls `archive_begin` first, which takes
+the lock and rsyncs `pool/`, `dists/` and `db/` down. publish.sh does not pull:
+it uploads what the writer just built, and pulling there would take a removal
+straight back out.
+
+`db/` travels with the archive rather than staying local, because a working
+copy restored without it publishes its own gaps. That is not hypothetical:
+config.sh used to point BASE_DIR at `/srv/http/apt` when the hostname matched,
+one add-local.sh run on p4 built a second database there, and the next publish
+from the workstation deleted the keyleds it had never heard of.
+
+The lock is a symlink at `publish.lock` in the archive root, named for whoever
+took it — `ln -s` fails atomically when one exists. Two writers against one
+Berkeley DB corrupt it. A lock outliving its run is cleared by hand; the
+refusal prints the command.
 
 `publish.sh` rsyncs **pool before dists, and prunes last**. An index naming a
 `.deb` that has not landed is a 404 for everyone running `apt-get update` in
 that window; the other order merely serves a stale index for a few seconds.
-Never rsync `$BASE_DIR` recursively — `conf/` and reprepro's `db/` live there.
+Never rsync `$BASE_DIR` recursively — each of its three directories has its own
+destination, and `db/` under the web root is not one of them.
 
 `ingest.sh` **skips a package already present at the same name and version.**
 Every release rebuilds every package, so ones whose version did not change come
